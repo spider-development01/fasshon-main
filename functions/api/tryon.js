@@ -40,7 +40,7 @@ export async function onRequestPost(context) {
     const garmentImageUrl = formatImage(garment_image);
 
     // 3. Call fal-ai/cat-vton synchronous endpoint
-    const falResponse = await fetch("https://fal.run/fal-ai/cat-vton", {
+    const falResponse = await fetch("https://fal.run/google/nano-banana-lite/edit", {
       method: "POST",
       headers: {
         "Authorization": `Key ${FAL_KEY}`,
