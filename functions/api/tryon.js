@@ -1,16 +1,22 @@
 // functions/api/tryon.js
-// Cloudflare Pages Function for fal-ai/cat-vton Virtual Try-On
+// Cloudflare Pages Function using google/nano-banana-lite/edit
+
+const TRY_ON_PROMPT = `Seamlessly edit the first photo by replacing the clothing with the exact suit/dress/garment shown in the second photo.
+Strict preservation instructions:
+- Keep the person's face, facial expression, hair, and head 100% unchanged.
+- Keep the body pose, posture, and natural body proportions unchanged.
+- Keep the entire background, lighting, and environment unchanged.
+- Perfectly fit and drape the reference clothing onto the person with realistic fabric folds, shadows, and textures.`;
 
 export async function onRequestPost(context) {
   const { request, env } = context;
 
-  // 1. Retrieve FAL API Key from Cloudflare Pages Environment Variables
   const FAL_KEY = env.FAL_KEY || env.FAL_API_KEY;
 
   if (!FAL_KEY) {
     return new Response(
       JSON.stringify({
-        error: "FAL_KEY is not configured. Please set FAL_KEY in your Cloudflare Pages dashboard or .dev.vars file.",
+        error: "FAL_KEY is not configured in Cloudflare Pages environment variables.",
       }),
       { status: 500, headers: { "Content-Type": "application/json" } }
     );
@@ -18,16 +24,15 @@ export async function onRequestPost(context) {
 
   try {
     const body = await request.json();
-    const { human_image, garment_image, cloth_type = "overall" } = body;
+    const { human_image, garment_image, prompt } = body;
 
     if (!human_image || !garment_image) {
       return new Response(
-        JSON.stringify({ error: "Both human_image and garment_image are required." }),
+        JSON.stringify({ error: "Both user photo and garment photo are required." }),
         { status: 400, headers: { "Content-Type": "application/json" } }
       );
     }
 
-    // 2. Format images as URLs or Data URIs accepted by fal.ai
     const formatImage = (img) => {
       if (typeof img !== "string") return img;
       if (img.startsWith("http://") || img.startsWith("https://") || img.startsWith("data:")) {
@@ -39,38 +44,38 @@ export async function onRequestPost(context) {
     const humanImageUrl = formatImage(human_image);
     const garmentImageUrl = formatImage(garment_image);
 
-    // 3. Call fal-ai/cat-vton synchronous endpoint
-    const falResponse = await fetch("https://fal.run/google/nano-banana-lite/edit", {
+    // Call google/nano-banana-lite/edit on fal.run
+    const apiResponse = await fetch("https://fal.run/google/nano-banana-lite/edit", {
       method: "POST",
       headers: {
         "Authorization": `Key ${FAL_KEY}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        human_image_url: humanImageUrl,
-        garment_image_url: garmentImageUrl,
-        cloth_type: cloth_type, // 'upper' | 'lower' | 'overall'
+        prompt: prompt || TRY_ON_PROMPT,
+        image_urls: [humanImageUrl, garmentImageUrl],
+        num_images: 1,
+        aspect_ratio: "auto",
       }),
     });
 
-    const falData = await falResponse.json();
+    const data = await apiResponse.json();
 
-    if (!falResponse.ok) {
+    if (!apiResponse.ok) {
       return new Response(
         JSON.stringify({
-          error: falData.detail || falData.message || "fal.ai Cat-VTON inference failed",
+          error: data.detail || data.message || "Image styling failed. Please try again.",
         }),
-        { status: falResponse.status, headers: { "Content-Type": "application/json" } }
+        { status: apiResponse.status, headers: { "Content-Type": "application/json" } }
       );
     }
 
-    // 4. Extract generated image URL
-    // fal-ai/cat-vton returns: { image: { url: "https://v3.fal.media/...", ... } }
-    const resultImageUrl = falData.image?.url || falData.images?.[0]?.url;
+    // Extract the generated image URL
+    const resultImageUrl = data.images?.[0]?.url || data.image?.url;
 
     if (!resultImageUrl) {
       return new Response(
-        JSON.stringify({ error: "No image URL returned by fal-ai/cat-vton." }),
+        JSON.stringify({ error: "No image was returned from the styling engine." }),
         { status: 500, headers: { "Content-Type": "application/json" } }
       );
     }
