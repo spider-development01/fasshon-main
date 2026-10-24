@@ -3,28 +3,20 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-  <meta name="description" content="FASSHON - AI Virtual Try-On Experience" />
+  <meta name="description" content="FASSHON - fal.ai CAT-VTON Virtual Try-On" />
   
-  <!-- Favicon -->
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%23111111'/><text y='54%' x='50%' dominant-baseline='middle' text-anchor='middle' font-size='70' fill='%23ffffff' font-family='sans-serif'>着</text></svg>">
   
   <title>FASSHON - Virtual Try-On</title>
   
-  <!-- Supabase Web SDK -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  
-  <!-- Bootstrap Icons -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
   
-  <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo+Black&family=Noto+Sans+JP:wght@400;700;900&display=swap" rel="stylesheet">
   
   <style>
-    /* =========================================
-       CSS VARIABLES: EURO-BRUTALISM SCHEME
-       ========================================= */
     :root {
       --beige: #F4F4F0;
       --white: #FFFFFF;
@@ -43,7 +35,6 @@
       --shadow-sm: 4px 4px 0px var(--black);
       --radius-card: 16px;
       --radius-pill: 100px;
-      
       --bounce: cubic-bezier(0.175, 0.885, 0.32, 1.275);
       
       --safe-top: env(safe-area-inset-top, 0px);
@@ -64,8 +55,6 @@
     }
 
     h1, h2, h3 { font-family: var(--font-bold); text-transform: uppercase; letter-spacing: -1px; line-height: 1; margin: 0; }
-    .text-red { color: var(--red); }
-    .text-cyan { color: var(--cyan); }
     .hidden { display: none !important; }
     
     .brand-logo {
@@ -75,10 +64,8 @@
       text-shadow: 3px 3px 0px var(--cyan);
       letter-spacing: 2px;
       line-height: 1;
-      pointer-events: auto;
     }
 
-    /* View Transition System */
     .view-container {
       position: absolute; inset: 0;
       background-color: var(--beige);
@@ -87,11 +74,8 @@
       opacity: 0; pointer-events: none; visibility: hidden;
       transition: opacity 0.3s ease, visibility 0.3s ease;
     }
-    .view-container.active {
-      opacity: 1; pointer-events: all; visibility: visible;
-    }
+    .view-container.active { opacity: 1; pointer-events: all; visibility: visible; }
 
-    /* Buttons & Elements */
     button {
       background: none; border: none; color: inherit; cursor: pointer;
       font-family: var(--font-bold); text-transform: uppercase;
@@ -128,11 +112,8 @@
       border: var(--border-thick); border-radius: 12px; padding: 14px;
       font-size: 1rem; font-family: var(--font-body); font-weight: 700;
       box-shadow: inset 3px 3px 0px rgba(0,0,0,0.05); outline: none;
-      transition: border-color 0.2s ease;
     }
-    .input-field:focus { border-color: var(--cyan); box-shadow: var(--shadow-sm); }
 
-    /* Camera & Layout */
     .camera-wrapper { position: absolute; inset: 0; background: var(--black); z-index: 10; }
     #cameraFeed { position: absolute; width: 100%; height: 100%; object-fit: cover; }
     
@@ -166,29 +147,38 @@
     }
     .shutter-btn:active { transform: scale(0.92); }
 
-    /* Selection View Cards & Grid */
-    .content-area { flex: 1; overflow-y: auto; padding: 20px; padding-bottom: calc(var(--safe-bottom) + 120px); }
+    .content-area { flex: 1; overflow-y: auto; padding: 20px; padding-bottom: calc(var(--safe-bottom) + 130px); }
     .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
     
     .reference-box {
       background: var(--white); border: var(--border-thick); border-radius: var(--radius-card);
       padding: 16px; margin-bottom: 20px; box-shadow: var(--shadow-solid);
-      position: relative; transition: border-color 0.2s ease;
     }
     .reference-box.selected {
-      border-color: var(--lime); background: #fdfef0;
+      border-color: var(--lime); background: #fcfef0;
       box-shadow: 0 0 0 4px var(--lime), var(--shadow-solid);
+    }
+
+    .cloth-type-toggle {
+      display: flex; gap: 8px; margin: 12px 0 16px;
+    }
+    .cloth-chip {
+      flex: 1; text-align: center; padding: 8px 6px; font-size: 0.75rem; font-weight: 900;
+      border: 2px solid var(--black); border-radius: var(--radius-pill); background: var(--white);
+      box-shadow: 2px 2px 0px var(--black); cursor: pointer;
+    }
+    .cloth-chip.active {
+      background: var(--black); color: var(--lime);
     }
 
     .card {
       background: var(--white); border: var(--border-thick); border-radius: var(--radius-card);
       overflow: hidden; position: relative; cursor: pointer;
-      box-shadow: var(--shadow-sm); transition: transform 0.2s var(--bounce);
-      aspect-ratio: 4/5; display: flex; flex-direction: column;
+      box-shadow: var(--shadow-sm); aspect-ratio: 4/5; display: flex; flex-direction: column;
     }
     .card:active { transform: scale(0.95); }
     .card.selected { border-color: var(--cyan); box-shadow: 0 0 0 4px var(--cyan), var(--shadow-sm); }
-    .card img { width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
+    .card img { width: 100%; height: 100%; object-fit: cover; }
     
     .card-label {
       position: absolute; bottom: 8px; left: 8px; right: 8px;
@@ -198,24 +188,19 @@
       box-shadow: 2px 2px 0px var(--black);
     }
 
-    .badge {
-      position: absolute; top: 10px; right: 10px;
-      padding: 4px 8px; font-weight: 900; font-size: 0.65rem;
-      border: 2px solid var(--black); z-index: 5; text-transform: uppercase;
-      transform: rotate(4deg); box-shadow: 2px 2px 0px var(--black);
+    .badge-lime {
+      background: var(--lime); color: var(--black); font-size: 0.65rem; font-weight: 900;
+      padding: 4px 8px; border: 2px solid var(--black); border-radius: 4px; box-shadow: 2px 2px 0 var(--black);
     }
-    .badge-lime { background: var(--lime); color: var(--black); }
-    .badge-cyan { background: var(--cyan); color: var(--white); }
-    
+
     .delete-card-btn {
       position: absolute; top: 8px; left: 8px; background: var(--red);
       color: var(--white); border: 2px solid var(--black); width: 30px; height: 30px;
       border-radius: 50%; display: flex; align-items: center; justify-content: center; z-index: 10;
       box-shadow: 2px 2px 0px var(--black);
     }
-    .delete-card-btn:active { transform: translate(2px, 2px); box-shadow: 0 0 0 var(--black); }
 
-    /* Modals & Overlays */
+    /* Modals & Slider */
     .overlay-view {
       position: fixed; inset: 0; z-index: 60; 
       background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(5px);
@@ -229,9 +214,7 @@
       border-radius: 24px; width: 100%; max-width: 420px; padding: 24px;
       display: flex; flex-direction: column; gap: 18px; 
       box-shadow: 10px 10px 0px var(--cyan);
-      transform: translateY(30px) scale(0.96); transition: transform 0.4s var(--bounce);
     }
-    .overlay-view.active .modal-card { transform: translateY(0) scale(1); }
 
     .preview-box {
       width: 100%; aspect-ratio: 1; background: var(--white);
@@ -241,13 +224,12 @@
     }
     .preview-box img { width: 100%; height: 100%; object-fit: contain; }
 
-    /* Comparison Slider */
     .compare-wrapper {
       flex: 1; position: relative; overflow: hidden; background: var(--white);
       border-bottom: var(--border-thick); border-radius: 0 0 24px 24px;
       touch-action: none;
     }
-    .compare-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; pointer-events: none; }
+    .compare-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
     #imgGenerated { clip-path: polygon(50% 0, 100% 0, 100% 100%, 50% 100%); }
 
     .slider-handle {
@@ -259,17 +241,15 @@
     .slider-btn {
       position: relative; width: 44px; height: 44px; background: var(--lime);
       border: var(--border-thick); border-radius: 50%; display: flex; align-items: center; justify-content: center;
-      box-shadow: 4px 4px 0px var(--black); color: var(--black); font-size: 1.2rem; pointer-events: none;
+      box-shadow: 4px 4px 0px var(--black); color: var(--black); font-size: 1.2rem;
     }
 
     .mode-toggle {
       display: flex; background: var(--white); border: var(--border-thick);
       border-radius: var(--radius-pill); padding: 4px; gap: 4px;
-      box-shadow: var(--shadow-sm);
     }
     .mode-btn {
       padding: 8px 16px; border-radius: var(--radius-pill); font-size: 0.8rem;
-      color: var(--black); transition: background 0.2s ease;
     }
     .mode-btn.active { background: var(--black); color: var(--white); }
 
@@ -279,7 +259,6 @@
     }
     @keyframes spin { 100% { transform: rotate(360deg); } }
 
-    /* Toast */
     .toast-container {
       position: fixed; top: calc(var(--safe-top) + 20px); left: 50%; transform: translateX(-50%);
       z-index: 9999; display: flex; flex-direction: column; gap: 10px; pointer-events: none;
@@ -297,7 +276,6 @@
 </head>
 <body>
 
-  <!-- Toast Container -->
   <div id="toastContainer" class="toast-container"></div>
 
   <!-- VIEW 1: Camera Interface -->
@@ -314,12 +292,11 @@
       <div id="cameraErrorMsg" class="error-overlay">
         <i class="bi bi-camera-video-off" style="font-size: 3.5rem; color: var(--black); margin-bottom: 10px;"></i>
         <h2>CAMERA UNAVAILABLE</h2>
-        <p style="font-weight: 700; margin: 10px 0 25px; color: var(--black);">Access denied or camera not found.</p>
+        <p style="font-weight: 700; margin: 10px 0 25px; color: var(--black);">Upload your photo instead.</p>
         <button onclick="document.getElementById('fileInput').click()" class="btn-primary" style="width: auto;">UPLOAD YOUR PHOTO</button>
       </div>
     </div>
 
-    <!-- Dock: Direct Upload Photo + Shutter + Camera Switch -->
     <div class="floating-dock">
       <button id="uploadBtn" class="icon-btn" aria-label="Upload Photo"><i class="bi bi-image" style="font-size: 1.3rem;"></i></button>
       <input type="file" id="fileInput" class="hidden" accept="image/*" />
@@ -328,71 +305,78 @@
     </div>
   </div>
 
-  <!-- VIEW 2: Add Garment to Wardrobe Modal -->
+  <!-- VIEW 2: Add to Wardrobe Modal -->
   <div id="addGarmentView" class="overlay-view">
     <div class="modal-card">
       <div style="display: flex; justify-content: space-between; align-items: flex-start;">
         <div>
-          <div style="background: var(--cyan); color: var(--white); display: inline-block; padding: 4px 10px; font-weight: 900; font-size: 0.7rem; text-transform: uppercase; border: 2px solid var(--black); margin-bottom: 8px; transform: rotate(-2deg); box-shadow: 2px 2px 0px var(--black);">Wardrobe</div>
+          <div style="background: var(--cyan); color: var(--white); display: inline-block; padding: 4px 10px; font-weight: 900; font-size: 0.7rem; border: 2px solid var(--black); margin-bottom: 8px;">WARDROBE</div>
           <h1 style="font-size: 1.8rem;">ADD TO WARDROBE</h1>
         </div>
-        <button id="closeAddGarmentBtn" class="icon-btn" style="width: 40px; height: 40px;" aria-label="Close"><i class="bi bi-x-lg"></i></button>
+        <button id="closeAddGarmentBtn" class="icon-btn" style="width: 40px; height: 40px;"><i class="bi bi-x-lg"></i></button>
       </div>
       
       <div id="garmentPreviewContainer" class="preview-box">
         <div style="text-align: center; color: var(--black); padding: 10px;">
-          <i id="garmentPreviewIcon" class="bi bi-cloud-arrow-up" style="font-size: 2.5rem;"></i>
+          <i class="bi bi-cloud-arrow-up" style="font-size: 2.5rem;"></i>
           <p style="font-size: 0.8rem; margin-top: 8px; font-weight: 700;">Select 1 or 2 Images<br/><span style="color: var(--red);">Auto-stitches top & bottom</span></p>
         </div>
         <img id="garmentPreviewImg" class="hidden" style="position: absolute; inset: 0;" alt="Garment Preview" />
       </div>
       <input type="file" id="garmentFileInput" class="hidden" accept="image/*" multiple />
       
-      <input type="text" id="garmentNameInput" placeholder="E.g. Casual Linen Suit" class="input-field" autocomplete="off" />
+      <input type="text" id="garmentNameInput" placeholder="E.g. Vintage Italian Suit" class="input-field" autocomplete="off" />
       <button id="saveGarmentBtn" class="btn-primary">SAVE TO WARDROBE</button>
     </div>
   </div>
 
-  <!-- VIEW 3: Garment Selection & Custom Reference Upload -->
+  <!-- VIEW 3: Selection / Direct Reference Upload -->
   <div id="garmentSelectView" class="view-container">
     <div style="padding: calc(var(--safe-top) + 16px) 20px 14px; display: flex; justify-content: space-between; align-items: center; border-bottom: var(--border-thick); background: var(--white); z-index: 20;">
       <button id="cancelSelectBtn" class="btn-pill" style="padding: 8px 16px; font-size: 0.8rem;">BACK</button>
-      <h2 style="font-size: 1.4rem;">CHOOSE OR MATCH SUIT</h2>
+      <h2 style="font-size: 1.3rem;">CAT-VTON TRY-ON</h2>
       <div style="width: 50px;"></div>
     </div>
     
     <div class="content-area">
-      <!-- Your Captured/Uploaded Photo Status Bar -->
-      <div style="display: flex; align-items: center; gap: 14px; background: var(--white); padding: 12px 16px; border: var(--border-thick); border-radius: 16px; box-shadow: var(--shadow-sm); margin-bottom: 18px;">
+      <!-- User Photo Banner -->
+      <div style="display: flex; align-items: center; gap: 14px; background: var(--white); padding: 12px 16px; border: var(--border-thick); border-radius: 16px; box-shadow: var(--shadow-sm); margin-bottom: 16px;">
         <img id="capturedThumb" style="width: 62px; height: 62px; object-fit: cover; border: 2px solid var(--black); border-radius: 10px;" alt="Captured" />
         <div style="flex: 1;">
-          <div style="font-weight: 900; font-size: 0.75rem; color: var(--cyan); text-transform: uppercase;">1. Your Photo Ready</div>
-          <div style="font-weight: 700; font-size: 0.85rem; color: var(--black);">Now pick reference clothing below</div>
+          <div style="font-weight: 900; font-size: 0.75rem; color: var(--cyan);">1. YOUR PHOTO READY</div>
+          <div style="font-weight: 700; font-size: 0.82rem;">Select reference outfit & fit below</div>
         </div>
       </div>
 
-      <!-- MATCH OPTION 1: DIRECT UPLOAD REFERENCE SUIT/DRESS/CLOTH PHOTO -->
+      <!-- Fit Type Selector (Cat-VTON parameter) -->
+      <div style="font-weight: 900; font-size: 0.8rem; margin-bottom: 6px;">OUTFIT FIT TYPE:</div>
+      <div class="cloth-type-toggle">
+        <div class="cloth-chip active" data-type="overall">OVERALL (SUIT/DRESS)</div>
+        <div class="cloth-chip" data-type="upper">UPPER (TOP/JACKET)</div>
+        <div class="cloth-chip" data-type="lower">LOWER (PANTS/SKIRT)</div>
+      </div>
+
+      <!-- Direct Reference Cloth Upload -->
       <div id="customReferenceCard" class="reference-box">
         <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
           <div>
-            <span class="badge badge-lime" style="position: static; display: inline-block; margin-bottom: 6px; transform: none;">DIRECT MATCH</span>
-            <h3 style="font-size: 1.15rem; line-height: 1.2;">UPLOAD REFERENCE SUIT / DRESS / CLOTH</h3>
+            <span class="badge-lime">DIRECT MATCH</span>
+            <h3 style="font-size: 1.1rem; margin-top: 6px;">UPLOAD REFERENCE SUIT / DRESS / CLOTH</h3>
           </div>
           <div id="customRefThumbWrap" class="hidden" style="width: 55px; height: 55px; border: 2px solid var(--black); border-radius: 8px; overflow: hidden; flex-shrink: 0;">
             <img id="customRefThumb" style="width: 100%; height: 100%; object-fit: cover;" alt="Custom Garment" />
           </div>
         </div>
-        <p style="font-size: 0.8rem; font-weight: 700; color: #444; margin-bottom: 14px;">
-          Upload any reference clothing photo (1 or 2 images). It will immediately apply to your original photo!
+        <p style="font-size: 0.78rem; font-weight: 700; color: #444; margin-bottom: 12px;">
+          Upload 1 or 2 reference cloth photos. CAT-VTON will transfer it onto your body photo!
         </p>
-        <button id="uploadCustomGarmentBtn" class="btn-pill" style="width: 100%; background: var(--lime);"><i class="bi bi-camera-fill"></i> UPLOAD REFERENCE PHOTO</button>
+        <button id="uploadCustomGarmentBtn" class="btn-pill" style="width: 100%; background: var(--lime);"><i class="bi bi-cloud-arrow-up-fill"></i> UPLOAD REFERENCE PHOTO</button>
         <input type="file" id="customGarmentFileInput" class="hidden" accept="image/*" multiple />
       </div>
 
-      <!-- MATCH OPTION 2: SELECT FROM WARDROBE -->
-      <div style="display: flex; align-items: center; margin: 20px 0 14px; gap: 10px;">
+      <div style="display: flex; align-items: center; margin: 18px 0 14px; gap: 10px;">
         <div style="flex: 1; height: 2px; background: var(--black);"></div>
-        <div style="font-family: var(--font-bold); font-size: 0.85rem; text-transform: uppercase;">OR PICK FROM WARDROBE</div>
+        <div style="font-family: var(--font-bold); font-size: 0.85rem;">OR PICK FROM WARDROBE</div>
         <div style="flex: 1; height: 2px; background: var(--black);"></div>
       </div>
 
@@ -404,22 +388,21 @@
       <div id="garmentsGrid" class="grid-2"></div>
     </div>
 
-    <!-- Bottom Action Button -->
     <div style="position: absolute; bottom: 0; left: 0; right: 0; padding: 18px 20px calc(var(--safe-bottom) + 18px); background: linear-gradient(transparent, var(--beige) 75%); z-index: 20;">
-      <button id="generateTryOnBtn" disabled class="btn-primary" style="box-shadow: 8px 8px 0px var(--cyan);">GENERATE TRY-ON</button>
+      <button id="generateTryOnBtn" disabled class="btn-primary" style="box-shadow: 8px 8px 0px var(--cyan);">GENERATE TRY-ON (CAT-VTON)</button>
     </div>
   </div>
 
   <!-- VIEW 4: Processing Overlay -->
   <div id="processingView" class="overlay-view" style="background: var(--beige);">
     <div class="loader-spinner"></div>
-    <h1 id="timerText" style="font-size: 2.2rem; margin-top: 25px; color: var(--black);">STYLING... 0S</h1>
+    <h1 id="timerText" style="font-size: 2.2rem; margin-top: 25px;">RUNNING CAT-VTON... 0S</h1>
     <div style="background: var(--lime); border: 2px solid var(--black); padding: 6px 18px; border-radius: 100px; font-weight: 900; margin-top: 15px; box-shadow: 2px 2px 0px var(--black); font-size: 0.85rem;">
-      FITTING CLOTHING TO YOUR BODY...
+      fal.ai CAT-VTON AI INFERENCE
     </div>
   </div>
 
-  <!-- VIEW 5: Comparison / Result View -->
+  <!-- VIEW 5: Comparison View -->
   <div id="comparisonView" class="view-container">
     <div style="padding: calc(var(--safe-top) + 15px) 20px; display: flex; justify-content: space-between; align-items: center; background: var(--beige); z-index: 20;">
       <button id="closeComparisonBtn" class="btn-pill" style="padding: 8px 16px; font-size: 0.8rem;">NEW PHOTO</button>
@@ -447,7 +430,7 @@
     </div>
   </div>
 
-  <!-- VIEW 6: Fullscreen Zoom Overlay -->
+  <!-- VIEW 6: Zoom Modal -->
   <div id="zoomOverlay" class="view-container" style="background: #000; z-index: 70;">
     <div style="position: absolute; top: calc(var(--safe-top) + 20px); left: 20px; right: 20px; display: flex; justify-content: space-between; z-index: 71; pointer-events: none;">
       <button id="closeZoomBtn" class="icon-btn" aria-label="Close Zoom" style="pointer-events: auto;"><i class="bi bi-x-lg"></i></button>
@@ -456,34 +439,26 @@
          <button id="zoomInBtn" class="icon-btn" aria-label="Zoom In" style="width: 40px; height: 40px; box-shadow: none;"><i class="bi bi-zoom-in"></i></button>
       </div>
     </div>
-    <div id="zoomPanContainer" style="width: 100%; height: 100%; overflow: auto; -webkit-overflow-scrolling: touch; display: flex; align-items: flex-start; justify-content: flex-start; background: var(--beige);">
-      <img id="zoomImg" style="width: 100%; height: auto; margin: auto; object-fit: contain; transition: width 0.2s ease-out;" alt="Zoomed Result" />
+    <div id="zoomPanContainer" style="width: 100%; height: 100%; overflow: auto; display: flex; background: var(--beige);">
+      <img id="zoomImg" style="width: 100%; height: auto; margin: auto; object-fit: contain;" alt="Zoomed Result" />
     </div>
   </div>
 
   <script>
     window.addEventListener('DOMContentLoaded', () => {
-      // --- SUPABASE CONFIGURATION ---
+      // --- SUPABASE CLIENT (For storage & database save) ---
       const SUPABASE_URL = 'https://rmfubnduytozikcgzvok.supabase.co';
       const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJtZnVibmR1eXRvemlrY2d6dm9rIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE2OTIyMDgsImV4cCI6MjA5NzI2ODIwOH0.XmxDD8mH8rgq3OZmD7jVophtH2W3NNDgSRJKC3RXvJU';
       const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-      // --- STATE & PROMPT ---
+      // --- APPLICATION STATE ---
       let videoStream = null;
       let currentFacingMode = 'environment';
       let currentOriginalDataUrl = null; 
-      let selectedGarmentBase64 = null;
+      let selectedGarmentImage = null; // Can be base64 data URI or public Supabase URL
+      let selectedClothType = 'overall'; // 'overall' | 'upper' | 'lower'
       let allGarments = [];
-      let isCompareMode = true; 
-      
-      const VIRTUAL_TRY_ON_PROMPT = `Edit the **first photo** by replacing only the clothing/outfit with the **exact suit shown in the second reference photo**.
-### Strict preservation requirements
-* Keep my **face 100% unchanged**.
-* Keep my **body position and pose exactly unchanged**.
-* Keep the **entire background exactly unchanged**.
-* Keep my **hands, arms, neck, head position, and visible body proportions exactly as they are**.
-### Suit replacement
-Use the **second photo only as the clothing reference**. Recreate its suit accurately on my body. The suit must naturally conform to my **existing body position and anatomy**.`;
+      let isCompareMode = true;
 
       let currentActiveDocId = null;
       let currentActiveOrigPath = null;
@@ -497,7 +472,6 @@ Use the **second photo only as the clothing reference**. Recreate its suit accur
       const comparisonView = document.getElementById('comparisonView');
       const addGarmentView = document.getElementById('addGarmentView');
 
-      // --- UTILITIES ---
       function showView(viewElement) {
         [cameraView, garmentSelectView, comparisonView].forEach(v => v.classList.remove('active'));
         if(viewElement) viewElement.classList.add('active');
@@ -538,11 +512,9 @@ Use the **second photo only as the clothing reference**. Recreate its suit accur
         });
       }
 
-      // --- CAMERA INIT ---
+      // --- CAMERA SETUP ---
       async function initCamera() {
-        if (videoStream) {
-          videoStream.getTracks().forEach(track => track.stop());
-        }
+        if (videoStream) videoStream.getTracks().forEach(track => track.stop());
         try {
           videoStream = await navigator.mediaDevices.getUserMedia({
             video: { facingMode: currentFacingMode, width: { ideal: 1920 }, height: { ideal: 1080 } },
@@ -566,11 +538,10 @@ Use the **second photo only as the clothing reference**. Recreate its suit accur
         initCamera();
       });
 
-      // --- IMAGE CAPTURE & UPLOAD (YOUR PHOTO) ---
+      // --- PHOTO CAPTURE & UPLOAD ---
       function prepareGarmentSelection(source, originalWidth, originalHeight) {
-        const MAX_SIZE = 2048; 
+        const MAX_SIZE = 1536; 
         let width = originalWidth; let height = originalHeight;
-        
         if (width > height) { if (width > MAX_SIZE) { height = Math.round(height * (MAX_SIZE / width)); width = MAX_SIZE; } } 
         else { if (height > MAX_SIZE) { width = Math.round(width * (MAX_SIZE / height)); height = MAX_SIZE; } }
 
@@ -581,14 +552,11 @@ Use the **second photo only as the clothing reference**. Recreate its suit accur
         currentOriginalDataUrl = tempCanvas.toDataURL('image/webp', 0.9);
         document.getElementById('capturedThumb').src = currentOriginalDataUrl;
         
-        // Reset selection state
-        selectedGarmentBase64 = null;
+        selectedGarmentImage = null;
         document.getElementById('generateTryOnBtn').disabled = true;
         document.getElementById('searchInput').value = '';
         
-        // Reset custom reference preview
-        const customRefCard = document.getElementById('customReferenceCard');
-        customRefCard.classList.remove('selected');
+        document.getElementById('customReferenceCard').classList.remove('selected');
         document.getElementById('customRefThumbWrap').classList.add('hidden');
         document.getElementById('customGarmentFileInput').value = '';
         
@@ -627,10 +595,18 @@ Use the **second photo only as the clothing reference**. Recreate its suit accur
 
       document.getElementById('cancelSelectBtn').addEventListener('click', () => {
         showView(cameraView);
-        document.getElementById('fileInput').value = '';
       });
 
-      // --- MATCH OPTION: DIRECT REFERENCE SUIT/DRESS/CLOTH UPLOAD ---
+      // --- CLOTH TYPE SELECTOR (Cat-VTON overall/upper/lower) ---
+      document.querySelectorAll('.cloth-chip').forEach(chip => {
+        chip.addEventListener('click', () => {
+          document.querySelectorAll('.cloth-chip').forEach(c => c.classList.remove('active'));
+          chip.classList.add('active');
+          selectedClothType = chip.getAttribute('data-type');
+        });
+      });
+
+      // --- DIRECT REFERENCE SUIT/DRESS/CLOTH UPLOAD ---
       const uploadCustomGarmentBtn = document.getElementById('uploadCustomGarmentBtn');
       const customGarmentFileInput = document.getElementById('customGarmentFileInput');
       const customReferenceCard = document.getElementById('customReferenceCard');
@@ -669,20 +645,17 @@ Use the **second photo only as the clothing reference**. Recreate its suit accur
             clothDataUrl = canvas.toDataURL('image/webp', 0.9);
           }
 
-          // Unselect any wardrobe card
-          const grid = document.getElementById('garmentsGrid');
-          Array.from(grid.children).forEach(c => c.classList.remove('selected'));
-
-          // Set custom outfit as active
-          selectedGarmentBase64 = clothDataUrl.split(',')[1];
+          Array.from(document.getElementById('garmentsGrid').children).forEach(c => c.classList.remove('selected'));
+          
+          selectedGarmentImage = clothDataUrl;
           customRefThumb.src = clothDataUrl;
           customRefThumbWrap.classList.remove('hidden');
           customReferenceCard.classList.add('selected');
           
           document.getElementById('generateTryOnBtn').disabled = false;
-          showToast("Reference clothing selected!");
+          showToast("Reference cloth selected!");
         } catch(err) {
-          showToast("Failed to process reference image.", true);
+          showToast("Error processing reference photo.", true);
         }
       });
 
@@ -703,7 +676,6 @@ Use the **second photo only as the clothing reference**. Recreate its suit accur
       garmentFileInput.addEventListener('change', async (e) => {
         const files = e.target.files;
         if (!files || files.length === 0) return;
-        
         try {
           if (files.length === 1) {
             const img = await loadImageFromFile(files[0]);
@@ -728,22 +700,21 @@ Use the **second photo only as the clothing reference**. Recreate its suit accur
           garmentPreviewImg.src = newGarmentDataUrl;
           garmentPreviewImg.classList.remove('hidden');
         } catch (err) { 
-          showToast("Error loading images.", true); 
+          showToast("Error reading image.", true); 
         }
       });
 
       document.getElementById('saveGarmentBtn').addEventListener('click', async () => {
         const name = document.getElementById('garmentNameInput').value.trim();
         if(!name || !newGarmentDataUrl) {
-          showToast("Please provide both a name and an image.", true);
+          showToast("Please provide both name and image.", true);
           return;
         }
-        
         const btn = document.getElementById('saveGarmentBtn');
-        const originalHTML = btn.innerHTML;
-        btn.innerHTML = `<div class="loader-spinner" style="width: 24px; height: 24px; border-width: 3px; border-top-color: var(--white); margin: 0 auto;"></div>`;
+        const origText = btn.innerHTML;
+        btn.innerHTML = `<div class="loader-spinner" style="width: 22px; height: 22px; border-width: 3px; border-top-color: #fff; margin: auto;"></div>`;
         btn.disabled = true;
-        
+
         try {
           const blob = await convertToWebP(newGarmentDataUrl);
           const path = `garment_${Date.now()}.webp`;
@@ -753,14 +724,13 @@ Use the **second photo only as the clothing reference**. Recreate its suit accur
           addGarmentView.classList.remove('active');
           document.getElementById('garmentNameInput').value = '';
           garmentPreviewImg.classList.add('hidden');
-          newGarmentDataUrl = null; 
-          garmentFileInput.value = '';
-          showToast("Suit added to wardrobe!");
+          newGarmentDataUrl = null;
+          showToast("Saved to wardrobe!");
           if(garmentSelectView.classList.contains('active')) loadGarments();
-        } catch (err) { 
-          showToast("Upload failed.", true); 
-        } finally { 
-          btn.innerHTML = originalHTML;
+        } catch(e) {
+          showToast("Upload failed.", true);
+        } finally {
+          btn.innerHTML = origText;
           btn.disabled = false;
         }
       });
@@ -770,21 +740,16 @@ Use the **second photo only as the clothing reference**. Recreate its suit accur
         grid.innerHTML = Array(4).fill(`<div class="card" style="background: #e0e0e0; animation: pulse 1.5s infinite;"></div>`).join('');
         
         const { data, error } = await supabaseClient.from('garments').select('*').order('created_at', { ascending: false });
-        if(error) {
-          showToast("Failed to load wardrobe.", true);
-          return;
-        }
-        
-        allGarments = data || []; 
+        if(error) { showToast("Failed to load wardrobe.", true); return; }
+        allGarments = data || [];
         renderGarments(allGarments);
       }
 
       function renderGarments(garments) {
         const grid = document.getElementById('garmentsGrid');
         grid.innerHTML = '';
-        
         if(garments.length === 0) {
-          grid.innerHTML = `<div style="grid-column: span 2; text-align: center; padding: 20px; font-weight: 700; color: var(--black);">No wardrobe suits yet. Use the upload option above!</div>`;
+          grid.innerHTML = `<div style="grid-column: span 2; text-align: center; padding: 20px; font-weight: 700;">No wardrobe suits yet. Use direct upload above!</div>`;
           return;
         }
 
@@ -804,81 +769,54 @@ Use the **second photo only as the clothing reference**. Recreate its suit accur
             try {
               await supabaseClient.from('garments').delete().eq('id', g.id);
               await supabaseClient.storage.from('garments').remove([g.image_path]);
-              showToast("Suit removed.");
+              showToast("Suit deleted.");
               loadGarments();
-            } catch(err) { showToast("Failed to delete suit.", true); }
+            } catch(err) { showToast("Failed to delete.", true); }
           };
 
-          div.onclick = async () => {
+          div.onclick = () => {
             Array.from(grid.children).forEach(c => c.classList.remove('selected'));
             div.classList.add('selected');
-            
-            // Deactivate custom upload card styling
             customReferenceCard.classList.remove('selected');
-            
-            try {
-              const response = await fetch(url);
-              const blob = await response.blob();
-              const reader = new FileReader();
-              reader.onloadend = () => {
-                selectedGarmentBase64 = reader.result.split(',')[1];
-                document.getElementById('generateTryOnBtn').disabled = false;
-              };
-              reader.readAsDataURL(blob);
-            } catch(e) {
-              showToast("Error selecting garment.", true);
-            }
+            selectedGarmentImage = url; // Pass public URL directly to fal.ai
+            document.getElementById('generateTryOnBtn').disabled = false;
           };
           grid.appendChild(div);
         });
       }
 
-      let searchTimeout;
-      document.getElementById('searchInput').addEventListener('input', (e) => {
-        clearTimeout(searchTimeout);
-        searchTimeout = setTimeout(() => {
-          const term = e.target.value.toLowerCase();
-          renderGarments(allGarments.filter(g => g.name.toLowerCase().includes(term)));
-        }, 300);
-      });
-
-      // --- GENERATION & AUTO-SAVE (SAVES TO SUPABASE DATABASE) ---
+      // --- GENERATE TRY-ON VIA fal-ai/cat-vton (Cloudflare Pages Function) ---
       document.getElementById('generateTryOnBtn').addEventListener('click', async () => {
-        if(!selectedGarmentBase64) return;
+        if(!selectedGarmentImage || !currentOriginalDataUrl) return;
         
-        const base64Image = currentOriginalDataUrl.split(',')[1];
         const btn = document.getElementById('generateTryOnBtn');
-
         processingView.classList.add('active');
+
         let seconds = 0;
         const timerText = document.getElementById('timerText');
-        timerText.textContent = `STYLING... 0S`;
-        const timer = setInterval(() => { seconds++; timerText.textContent = `STYLING... ${seconds}S`; }, 1000);
+        timerText.textContent = `RUNNING CAT-VTON... 0S`;
+        const timer = setInterval(() => { seconds++; timerText.textContent = `RUNNING CAT-VTON... ${seconds}S`; }, 1000);
 
         try {
+          // 1. Call Cloudflare Pages Functions backend: /api/tryon
           const response = await fetch('/api/tryon', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ prompt: VIRTUAL_TRY_ON_PROMPT, image: base64Image, mask: selectedGarmentBase64, model: 'gemini-3.1-flash-image' })
+            body: JSON.stringify({
+              human_image: currentOriginalDataUrl,
+              garment_image: selectedGarmentImage,
+              cloth_type: selectedClothType
+            })
           });
 
           const data = await response.json();
-          if (!response.ok) throw new Error(data.error || "Server error");
+          if (!response.ok) throw new Error(data.error || "CAT-VTON inference failed");
+          if (!data.image_url) throw new Error("No image URL returned by CAT-VTON");
 
-          const candidateParts = data.candidates?.[0]?.content?.parts || [];
-          let generatedImgSrc = null;
-
-          candidateParts.forEach((part) => {
-            const inlineImg = part.inlineData || part.inline_data;
-            if (inlineImg && inlineImg.data) {
-              generatedImgSrc = `data:${inlineImg.mimeType || 'image/webp'};base64,${inlineImg.data}`;
-            }
-          });
-
-          if (!generatedImgSrc) throw new Error("No image data returned from AI.");
-
-          timerText.textContent = `SAVING...`;
+          const generatedImgSrc = data.image_url;
+          timerText.textContent = `SAVING TO DATABASE...`;
           
+          // 2. Auto-save Original and Edited Images to Supabase for admin
           const timestamp = Date.now();
           const origPath = `original_${timestamp}.webp`;
           const genPath = `generated_${timestamp}.webp`;
@@ -886,13 +824,11 @@ Use the **second photo only as the clothing reference**. Recreate its suit accur
           const origBlob = await convertToWebP(currentOriginalDataUrl);
           const genBlob = await convertToWebP(generatedImgSrc);
 
-          // Upload both original (normal) and generated (edited) images
           await Promise.all([
             supabaseClient.storage.from('photos').upload(origPath, origBlob, { contentType: 'image/webp' }),
             supabaseClient.storage.from('photos').upload(genPath, genBlob, { contentType: 'image/webp' })
           ]);
 
-          // Save record in the gallery table for Admin dashboard
           const { data: insertedData } = await supabaseClient.from('gallery').insert([{ 
             original_image_path: origPath, 
             generated_image_path: genPath 
@@ -906,17 +842,15 @@ Use the **second photo only as the clothing reference**. Recreate its suit accur
           showToast("Try-on complete!");
 
         } catch (err) {
-          const originalText = btn.innerHTML;
-          btn.textContent = "FAILED - TRY AGAIN";
-          showToast("Generation failed. Please try again.", true);
-          setTimeout(() => { btn.innerHTML = originalText; }, 3000);
+          console.error(err);
+          showToast(err.message || "Generation failed. Please try again.", true);
         } finally {
           clearInterval(timer);
           processingView.classList.remove('active');
         }
       });
 
-      // --- COMPARISON SLIDER ---
+      // --- COMPARISON SLIDER SETUP ---
       const compareContainer = document.getElementById('compareContainer');
       const imgGen = document.getElementById('imgGenerated');
       const sliderHandle = document.getElementById('sliderHandle');
@@ -934,20 +868,13 @@ Use the **second photo only as the clothing reference**. Recreate its suit accur
       function handleSlide(e) {
         if (!isSliding || !isCompareMode) return;
         if(e.cancelable) e.preventDefault(); 
-        
         let clientX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
         const rect = compareContainer.getBoundingClientRect();
-        
-        let x = clientX - rect.left;
-        x = Math.max(0, Math.min(x, rect.width));
-        
+        let x = Math.max(0, Math.min(clientX - rect.left, rect.width));
         let percent = (x / rect.width) * 100;
         imgGen.style.clipPath = `polygon(${percent}% 0, 100% 0, 100% 100%, ${percent}% 100%)`;
-        
-        const handleWidth = 40; 
-        let handleX = Math.max(handleWidth / 2, Math.min(x, rect.width - handleWidth / 2));
-        let handlePercent = (handleX / rect.width) * 100;
-        sliderHandle.style.left = `${handlePercent}%`;
+        let handleX = Math.max(20, Math.min(x, rect.width - 20));
+        sliderHandle.style.left = `${(handleX / rect.width) * 100}%`;
       }
 
       compareContainer.addEventListener('mousedown', (e) => { isSliding = true; handleSlide(e); });
@@ -978,11 +905,10 @@ Use the **second photo only as the clothing reference**. Recreate its suit accur
       btnCompare.addEventListener('click', () => setCompareMode(true));
       btnResult.addEventListener('click', () => setCompareMode(false));
 
-      // --- FULLSCREEN ZOOM ---
+      // Zoom Modal
       const zoomOverlay = document.getElementById('zoomOverlay');
       const zoomImg = document.getElementById('zoomImg');
       let currentZoom = 1;
-
       function applyZoom() { zoomImg.style.width = `${currentZoom * 100}%`; }
 
       document.getElementById('zoomBtn').addEventListener('click', () => {
@@ -990,23 +916,17 @@ Use the **second photo only as the clothing reference**. Recreate its suit accur
         zoomOverlay.classList.add('active');
         currentZoom = 1; applyZoom();
       });
-
       document.getElementById('closeZoomBtn').addEventListener('click', () => zoomOverlay.classList.remove('active'));
       document.getElementById('zoomInBtn').addEventListener('click', () => { currentZoom = Math.min(currentZoom + 0.5, 5); applyZoom(); });
       document.getElementById('zoomOutBtn').addEventListener('click', () => { currentZoom = Math.max(currentZoom - 0.5, 1); applyZoom(); });
 
-      // Actions on Comparison View
       document.getElementById('deleteBtn').addEventListener('click', async () => {
         if(!confirm("Discard this try-on result?")) return;
         try {
-          if (currentActiveDocId) {
-            await supabaseClient.from('gallery').delete().eq('id', currentActiveDocId);
-          }
-          if (currentActiveOrigPath && currentActiveGenPath) {
-            await supabaseClient.storage.from('photos').remove([currentActiveOrigPath, currentActiveGenPath]);
-          }
+          if (currentActiveDocId) await supabaseClient.from('gallery').delete().eq('id', currentActiveDocId);
+          if (currentActiveOrigPath && currentActiveGenPath) await supabaseClient.storage.from('photos').remove([currentActiveOrigPath, currentActiveGenPath]);
           showToast("Result discarded.");
-        } catch(e) { }
+        } catch(e) {}
         showView(cameraView);
       });
 
@@ -1016,17 +936,16 @@ Use the **second photo only as the clothing reference**. Recreate its suit accur
           const blob = await response.blob();
           const blobUrl = URL.createObjectURL(blob);
           const link = document.createElement('a');
-          link.href = blobUrl; link.download = `VirtualTryOn_${Date.now()}.webp`;
+          link.href = blobUrl; link.download = `CAT_VTON_${Date.now()}.webp`;
           document.body.appendChild(link); link.click(); document.body.removeChild(link); URL.revokeObjectURL(blobUrl);
-          showToast("Image saved!");
-        } catch (err) { showToast("Failed to download.", true); }
+          showToast("Saved to device!");
+        } catch (err) { showToast("Download failed.", true); }
       });
 
       document.getElementById('closeComparisonBtn').addEventListener('click', () => {
         showView(cameraView);
       });
 
-      // Start Camera
       initCamera();
     });
   </script>
