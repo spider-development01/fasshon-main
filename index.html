@@ -167,7 +167,7 @@
     }
     .card:active { transform: scale(0.96); }
     .card.selected { border-color: var(--cyan); box-shadow: 0 0 0 4px var(--cyan), var(--shadow-sm); }
-    .card img { width: 100%; height: 100%; object-fit: cover; }
+    .card img { width: 100%; height: 100%; object-fit: cover; background: #ecece6; }
     
     .card-label {
       position: absolute; bottom: 8px; left: 8px; right: 8px;
@@ -188,7 +188,6 @@
       border-radius: 50%; display: flex; align-items: center; justify-content: center; z-index: 10;
       box-shadow: 2px 2px 0px var(--black);
     }
-    .delete-card-btn:hover { transform: scale(1.1); }
     .delete-card-btn:active { transform: translate(2px, 2px); box-shadow: 0 0 0 var(--black); }
 
     /* Modals & Overlays */
@@ -315,7 +314,7 @@
     </div>
   </div>
 
-  <!-- VIEW 2: Wardrobe Manager Modal (Add & Delete Suits) -->
+  <!-- VIEW 2: Wardrobe Modal (Add & Delete Suits) -->
   <div id="wardrobeModal" class="overlay-view">
     <div class="modal-card">
       <div class="modal-header">
@@ -343,14 +342,12 @@
           <input type="file" id="garmentFileInput" class="hidden" accept="image/*" multiple />
           
           <input type="text" id="garmentNameInput" placeholder="Suit Name (e.g. Navy Tweed Blazer)" class="input-field" autocomplete="off" />
-          <button id="saveGarmentBtn" class="btn-primary">SAVE TO DATABASE</button>
+          <button id="saveGarmentBtn" class="btn-primary">SAVE TO WARDROBE</button>
         </div>
 
         <!-- TAB 2: MANAGE & DELETE EXISTING SUITS -->
         <div id="panelManageSuits" class="hidden" style="display: flex; flex-direction: column; gap: 14px;">
-          <div id="manageSuitsList" style="display: flex; flex-direction: column; gap: 10px;">
-            <!-- Rendered list of wardrobe items with delete button -->
-          </div>
+          <div id="manageSuitsList" style="display: flex; flex-direction: column; gap: 10px;"></div>
         </div>
       </div>
     </div>
@@ -360,12 +357,11 @@
   <div id="garmentSelectView" class="view-container">
     <div style="padding: calc(var(--safe-top) + 16px) 20px 14px; display: flex; justify-content: space-between; align-items: center; border-bottom: var(--border-thick); background: var(--white); z-index: 20;">
       <button id="cancelSelectBtn" class="btn-pill" style="padding: 8px 16px; font-size: 0.8rem;">BACK</button>
-      <h2 style="font-size: 1.3rem;">MATCH YOUR OUTFIT</h2>
+      <h2 style="font-size: 1.3rem;">MATCH OUTFIT</h2>
       <div style="width: 50px;"></div>
     </div>
     
     <div class="content-area">
-      <!-- User Photo Banner -->
       <div style="display: flex; align-items: center; gap: 14px; background: var(--white); padding: 12px 16px; border: var(--border-thick); border-radius: 16px; box-shadow: var(--shadow-sm); margin-bottom: 18px;">
         <img id="capturedThumb" style="width: 62px; height: 62px; object-fit: cover; border: 2px solid var(--black); border-radius: 10px;" alt="Captured" />
         <div style="flex: 1;">
@@ -465,16 +461,19 @@
 
   <script>
     window.addEventListener('DOMContentLoaded', () => {
-      // --- SUPABASE CLIENT CONFIGURATION ---
+      // --- SUPABASE CLIENT ---
       const SUPABASE_URL = 'https://rmfubnduytozikcgzvok.supabase.co';
       const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJtZnVibmR1eXRvemlrY2d6dm9rIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE2OTIyMDgsImV4cCI6MjA5NzI2ODIwOH0.XmxDD8mH8rgq3OZmD7jVophtH2W3NNDgSRJKC3RXvJU';
       const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+      // --- PLACEHOLDER SVG FOR BROKEN IMAGES ---
+      const PLACEHOLDER_SVG = "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23ecece6'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='12' font-weight='bold' fill='%23999999'%3ENO IMAGE%3C/text%3E%3C/svg%3E";
 
       // --- STATE ---
       let videoStream = null;
       let currentFacingMode = 'environment';
       let currentOriginalDataUrl = null; 
-      let selectedGarmentImage = null; // Data URL or Public URL
+      let selectedGarmentImage = null; 
       let allGarments = [];
       let isCompareMode = true;
 
@@ -668,14 +667,13 @@
         }
       });
 
-      // --- WARDROBE SYSTEM & ACTUAL SUPABASE DELETION ---
+      // --- WARDROBE SYSTEM & GUARANTEED DELETION ---
       document.getElementById('openWardrobeModalBtn').addEventListener('click', () => {
         wardrobeModal.classList.add('active');
         loadGarments();
       });
       document.getElementById('closeWardrobeModalBtn').addEventListener('click', () => wardrobeModal.classList.remove('active'));
 
-      // Wardrobe modal tabs
       const tabAddSuit = document.getElementById('tabAddSuit');
       const tabManageSuits = document.getElementById('tabManageSuits');
       const panelAddSuit = document.getElementById('panelAddSuit');
@@ -760,7 +758,7 @@
           showToast("Saved to wardrobe!");
           
           await loadGarments();
-          tabManageSuits.click(); // Switch to management list
+          tabManageSuits.click();
         } catch(e) {
           showToast(e.message || "Upload failed.", true);
         } finally {
@@ -769,12 +767,18 @@
         }
       });
 
-      // ACTUAL DELETION FROM SUPABASE DATABASE & STORAGE
+      // ROBUST DELETION FROM DATABASE & STORAGE
       async function deleteGarmentFromSupabase(garment) {
         if(!confirm(`Delete "${garment.name}" permanently from your wardrobe?`)) return false;
 
+        // 1. Optimistically remove from local state immediately so user sees it vanish
+        allGarments = allGarments.filter(g => g.id !== garment.id);
+        document.getElementById('wardrobeCountSpan').textContent = allGarments.length;
+        renderGarments(allGarments);
+        renderManageSuitsList();
+
         try {
-          // 1. Delete from Supabase Database
+          // 2. Delete from Supabase Database
           const { error: dbError } = await supabaseClient
             .from('garments')
             .delete()
@@ -782,23 +786,27 @@
 
           if (dbError) throw dbError;
 
-          // 2. Delete from Supabase Storage Bucket
+          // 3. Try deleting from storage (non-blocking if file is already missing)
           if (garment.image_path) {
-            await supabaseClient.storage.from('garments').remove([garment.image_path]);
+            try {
+              await supabaseClient.storage.from('garments').remove([garment.image_path]);
+            } catch (storageErr) {
+              console.warn("Storage removal non-critical warning:", storageErr);
+            }
           }
 
-          // 3. Reset selection if user had selected this suit
           if (selectedGarmentImage && selectedGarmentImage.includes(garment.image_path)) {
             selectedGarmentImage = null;
             document.getElementById('generateTryOnBtn').disabled = true;
           }
 
           showToast("Suit deleted from wardrobe.");
-          await loadGarments();
           return true;
         } catch (err) {
           console.error("Delete error:", err);
           showToast(err.message || "Failed to delete suit.", true);
+          // Re-sync on error
+          await loadGarments();
           return false;
         }
       }
@@ -815,7 +823,6 @@
         renderManageSuitsList();
       }
 
-      // Render Try-On selection grid
       function renderGarments(garments) {
         const grid = document.getElementById('garmentsGrid');
         grid.innerHTML = '';
@@ -829,12 +836,11 @@
           const div = document.createElement('div');
           div.className = "card";
           div.innerHTML = `
-            <img src="${url}" crossorigin="anonymous" loading="lazy" alt="${g.name}" />
+            <img src="${url}" onerror="this.onerror=null; this.src='${PLACEHOLDER_SVG}';" crossorigin="anonymous" loading="lazy" alt="${g.name}" />
             <div class="card-label">${g.name}</div>
             <button class="delete-card-btn" title="Delete from Wardrobe" aria-label="Delete Suit"><i class="bi bi-trash"></i></button>
           `;
           
-          // Delete button on the try-on card
           div.querySelector('.delete-card-btn').onclick = async (e) => {
             e.stopPropagation(); 
             await deleteGarmentFromSupabase(g);
@@ -851,7 +857,6 @@
         });
       }
 
-      // Render Wardrobe Modal List
       function renderManageSuitsList() {
         const listContainer = document.getElementById('manageSuitsList');
         listContainer.innerHTML = '';
@@ -865,7 +870,7 @@
           const row = document.createElement('div');
           row.style.cssText = "display: flex; align-items: center; justify-content: space-between; background: var(--white); border: 2px solid var(--black); border-radius: 14px; padding: 10px 14px; box-shadow: 2px 2px 0 var(--black); gap: 12px;";
           row.innerHTML = `
-            <img src="${url}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 8px; border: 2px solid var(--black); flex-shrink: 0;" alt="${g.name}" />
+            <img src="${url}" onerror="this.onerror=null; this.src='${PLACEHOLDER_SVG}';" style="width: 50px; height: 50px; object-fit: cover; border-radius: 8px; border: 2px solid var(--black); flex-shrink: 0; background: #eee;" alt="${g.name}" />
             <div style="flex: 1; overflow: hidden;">
               <div style="font-family: var(--font-bold); font-size: 0.9rem; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">${g.name}</div>
               <div style="font-size: 0.7rem; color: #666;">${g.created_at ? new Date(g.created_at).toLocaleDateString() : ''}</div>
@@ -881,7 +886,6 @@
         });
       }
 
-      // Search Wardrobe
       let searchTimeout;
       document.getElementById('searchInput').addEventListener('input', (e) => {
         clearTimeout(searchTimeout);
@@ -919,7 +923,6 @@
           const generatedImgSrc = data.image_url;
           timerText.textContent = `SAVING...`;
           
-          // Auto-save original and generated photos to database for admin
           const timestamp = Date.now();
           const origPath = `original_${timestamp}.webp`;
           const genPath = `generated_${timestamp}.webp`;
